@@ -396,10 +396,11 @@ section.hero{
 .convert-svg{ width:20px; height:20px; display:block; }
 .convert-svg path{ stroke: currentColor; stroke-width:1.6; }
 
-.convert-label{ font-size:0.95rem; color:var(--convert-green); font-weight:600; }
+.convert-label{ font-size:0.95rem; color:var(--convert-green); font-weight:600; transition: color .12s ease; }
 
 .convert-btn:hover{ transform: translateY(-3px); box-shadow: 0 10px 30px rgba(47,168,107,0.12); background: var(--convert-green); color: #fff; }
 .convert-btn:hover .convert-svg path{ stroke: currentColor; }
+.convert-btn:hover .convert-label{ color: #fff; }
 
 /* Make sure the hero controls remain centered on small screens */
 @media (max-width:520px){
