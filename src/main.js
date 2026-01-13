@@ -18,7 +18,12 @@ const explainBtn = document.getElementById('explainBtn');
 const answeredBadge = document.getElementById('answeredBadge');
 const correctBadge = document.getElementById('correctBadge');
 const wrongBadge = document.getElementById('wrongBadge');
-const aiKeyBtn = document.getElementById('aiKeyBtn');
+const modeMcqBtn = document.getElementById('modeMcq');
+const modeMatchBtn = document.getElementById('modeMatch');
+const matchingContainer = document.getElementById('matching');
+const matchingTermsEl = document.getElementById('matchingTerms');
+const matchingDefsEl = document.getElementById('matchingDefs');
+const matchingStatus = document.getElementById('matchingStatus');
 
 let questions = [];
 let currentIndex = 0;
@@ -28,13 +33,46 @@ let selected = {};
 // per-question status: null | 'correct' | 'wrong' | 'answered' (if no key)
 let qStatus = {};
 let counts = { answered: 0, correct: 0, wrong: 0 };
-const gradingInFlight = {}; // per-question flag to avoid duplicate grading calls
-const SERVER_URL = 'http://localhost:5174';
+const shuffleArray = (arr = []) => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
 
+function setMode(mode){
+  examMode = mode;
+  if (modeMcqBtn && modeMatchBtn) {
+    modeMcqBtn.classList.toggle('active', mode === 'mcq');
+    modeMatchBtn.classList.toggle('active', mode === 'matching');
+  }
+  if (mode === 'mcq') {
+    // Ensure counters stay accurate after switching back from matching mode
+    recomputeAllCounts();
+  }
+  renderQuestion();
+}
+let examMode = 'mcq';
+let matchingCache = {}; // stores generated matching data per question
+const gradingInFlight = {}; // per-question flag to avoid duplicate grading calls
+const SERVER_URL = 'http://localhost:3001';
+
+let lastBadgeCounts = { answered: null, correct: null, wrong: null };
 function updateBadges(){
+  // Skip DOM work if counts have not changed
+  if (
+    lastBadgeCounts.answered === counts.answered &&
+    lastBadgeCounts.correct === counts.correct &&
+    lastBadgeCounts.wrong === counts.wrong
+  ) return;
+
+  lastBadgeCounts = { ...counts };
+
   if (answeredBadge) answeredBadge.textContent = `Answered: ${counts.answered}`;
-  if (correctBadge) correctBadge.textContent = `Correct: ${counts.correct}`;
-  if (wrongBadge) wrongBadge.textContent = `Wrong: ${counts.wrong}`;
+  if (correctBadge) correctBadge.textContent = `✓ ${counts.correct}`;
+  if (wrongBadge) wrongBadge.textContent = `✗ ${counts.wrong}`;
 }
 
 function recomputeAllCounts(){
@@ -57,30 +95,41 @@ function recomputeAllCounts(){
 }
 
 async function gradeQuestion(index){
-  if (gradingInFlight[index]) return;
+  if (gradingInFlight[index]) {
+    return;
+  }
   const q = questions[index];
-  if (!q || !Array.isArray(q.choices) || !q.choices.length) return;
-  if (q.answer && /^[A-H]$/.test(q.answer)) return; // already graded
+  if (!q || !Array.isArray(q.choices) || !q.choices.length) {
+    return;
+  }
+  if (q.answer && /^[A-H]$/.test(q.answer)) {
+    return; // already graded
+  }
   gradingInFlight[index] = true;
   try{
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const resp = await fetch(`${SERVER_URL}/api/grade`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stem: q.stem, choices: q.choices })
+      body: JSON.stringify({ stem: q.stem, choices: q.choices }),
+      signal: controller.signal
     });
-    if (!resp.ok) return;
+    clearTimeout(timeoutId);
+    if (!resp.ok) {
+      return;
+    }
     const data = await resp.json();
     const letter = data && data.letter && String(data.letter).toUpperCase();
     if (letter && /^[A-H]$/.test(letter)) {
       q.answer = letter;
       const choice = selected[index];
-      if (choice){
-        if (qStatus[index] === 'answered') {
-          counts.answered = Math.max(0, counts.answered - 1);
-        } else if (qStatus[index] === 'correct') {
-          counts.correct = Math.max(0, counts.correct - 1);
-        } else if (qStatus[index] === 'wrong') {
-          counts.wrong = Math.max(0, counts.wrong - 1);
-        }
+      // Recompute counters for this question based on the new answer
+      const prev = qStatus[index];
+        if (prev === 'correct') { counts.correct--; counts.answered--; }
+        if (prev === 'wrong')   { counts.wrong--;   counts.answered--; }
+        if (prev === 'answered') counts.answered--;
+
+      if (choice) {
         if (choice === letter) {
           qStatus[index] = 'correct';
           counts.correct++;
@@ -88,11 +137,14 @@ async function gradeQuestion(index){
           qStatus[index] = 'wrong';
           counts.wrong++;
         }
-        updateBadges();
-        renderQuestion();
+        counts.answered++;
       }
+
+      updateBadges();
     }
-  } catch(_){}
+  } catch(err){
+    console.error('Grade question error:', err);
+  }
   finally{
     gradingInFlight[index] = false;
   }
@@ -108,14 +160,15 @@ choicesEl.addEventListener("click", (e) => {
 
   // handle counting: if this question was previously counted, undo that
   const prev = qStatus[currentIndex];
-  if (prev === 'correct') counts.correct--;
-  if (prev === 'wrong') counts.wrong--;
-  if (prev === 'answered') counts.answered--;
+    if (prev === 'correct') { counts.correct--; counts.answered--; }
+    if (prev === 'wrong')   { counts.wrong--;   counts.answered--; }
+    if (prev === 'answered') counts.answered--;
 
   selected[currentIndex] = letter;
 
   // if question has an answer key (questions[i].answer), evaluate
   const correctLetter = questions[currentIndex].answer?.toUpperCase?.() || null;
+  
   if (correctLetter) {
     if (letter === correctLetter) {
       qStatus[currentIndex] = 'correct';
@@ -125,17 +178,68 @@ choicesEl.addEventListener("click", (e) => {
       counts.wrong++;
     }
     counts.answered++;
+    // Remove selected from all, add to clicked
+    const prevSelected = choicesEl.querySelector('.choice.selected');
+    if (prevSelected) prevSelected.classList.remove('selected');
+    btn.classList.add('selected');
+    updateBadges();
   } else {
-    // no key available — just mark answered so user can track progress
+    // no key available — mark as answered and trigger AI grading
     qStatus[currentIndex] = 'answered';
     counts.answered++;
-    // Trigger live AI grading for this question; counters will be adjusted when the key arrives
+    // Remove selected from all, add to clicked
+    const prevSelected = choicesEl.querySelector('.choice.selected');
+    if (prevSelected) prevSelected.classList.remove('selected');
+    btn.classList.add('selected');
+    updateBadges();
+    // Trigger live AI grading; gradeQuestion will update counts when result arrives
     gradeQuestion(currentIndex);
   }
-
-  updateBadges();
-  renderQuestion();
 });
+
+// Matching interactions (term + definition pairing)
+if (matchingContainer) {
+  matchingContainer.addEventListener('click', (e) => {
+    const termBtn = e.target.closest('.match-term');
+    const defBtn = e.target.closest('.match-def');
+    const state = matchingCache[currentIndex];
+    if (!state) return;
+
+    if (termBtn) {
+      const termIdx = Number(termBtn.dataset.termIndex);
+      if (state.matchedTerms.has(termIdx)) return;
+      state.selectedTerm = termIdx;
+      state.selectedDef = null;
+      renderMatching(currentIndex);
+      return;
+    }
+
+    if (defBtn) {
+      const defIdx = Number(defBtn.dataset.defIndex);
+      if (state.matchedDefs.has(defIdx)) return;
+      if (state.selectedTerm === null) {
+        state.selectedDef = defIdx;
+        renderMatching(currentIndex);
+        return;
+      }
+      const termIdx = state.selectedTerm;
+      // Check if term and definition are the same index (correct pairing)
+      const isCorrect = termIdx === defIdx;
+      if (isCorrect) {
+        state.matchedTerms.add(termIdx);
+        state.matchedDefs.add(defIdx);
+        state.selectedTerm = null;
+        state.selectedDef = null;
+        if (matchingStatus) matchingStatus.textContent = state.matchedTerms.size === state.terms.length ? 'All pairs matched! 🎉' : 'Matched!';
+      } else {
+        state.selectedTerm = null;
+        state.selectedDef = null;
+        if (matchingStatus) matchingStatus.textContent = 'Not a match, try again.';
+      }
+      renderMatching(currentIndex);
+    }
+  });
+}
 // Enable button when file selected
 fileInput.addEventListener("change", () => {
   convertBtn.disabled = !fileInput.files.length;
@@ -172,6 +276,10 @@ convertBtn.addEventListener("click", async () => {
   questions = extractQuestions(text);
   currentIndex = 0;
   selected = {}; // reset selections on new upload
+  qStatus = {};  // reset per-question status
+  counts = { answered: 0, correct: 0, wrong: 0 }; // reset counters
+  lastBadgeCounts = { answered: null, correct: null, wrong: null }; // force badge repaint
+  matchingCache = {}; // clear any prior matching data
 
   if (!questions.length) {
     statusEl.textContent = "No questions detected in file.";
@@ -203,6 +311,10 @@ convertBtn.addEventListener("click", async () => {
   } catch (err) {
     console.warn('Failed to start quiz background video:', err);
   }
+
+  // Refresh badges after reset
+  updateBadges();
+
   renderQuestion();
 });
 
@@ -211,23 +323,44 @@ function renderQuestion() {
 
   questionEl.textContent = q.stem;
 
-  choicesEl.innerHTML = "";
+  const isMatching = examMode === 'matching';
+  choicesEl.style.display = isMatching ? 'none' : '';
+  if (matchingContainer) {
+    matchingContainer.hidden = !isMatching;
+    matchingContainer.style.display = isMatching ? 'block' : 'none';
+  }
 
-  const chosenLetter = selected[currentIndex] || null;
+  // Grade the current question lazily (only one at a time) so counters can update fast when the user answers.
+  if (!isMatching && (!q.answer || !/^[A-H]$/.test(q.answer))) {
+    gradeQuestion(currentIndex);
+  }
 
-  q.choices.forEach(choiceText => {
-    // choiceText like "A. blah blah"
-    const letter = choiceText.trim().slice(0, 1).toUpperCase();
+  if (!isMatching) {
+    choicesEl.innerHTML = "";
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "choice" + (chosenLetter === letter ? " selected" : "");
-    btn.textContent = choiceText;
-    btn.dataset.letter = letter;
-    btn.disabled = false;
+    const chosenLetter = selected[currentIndex] || null;
 
-    choicesEl.appendChild(btn);
-  });
+    q.choices.forEach(choiceText => {
+      // choiceText like "A. blah blah"
+      const letter = choiceText.trim().slice(0, 1).toUpperCase();
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "choice" + (chosenLetter === letter ? " selected" : "");
+      btn.textContent = choiceText;
+      btn.dataset.letter = letter;
+      btn.disabled = false;
+
+      choicesEl.appendChild(btn);
+    });
+  } else {
+      // Reset matching UI to avoid showing previous question while loading
+      if (matchingTermsEl) matchingTermsEl.innerHTML = '';
+      if (matchingDefsEl) matchingDefsEl.innerHTML = '';
+      if (matchingStatus) matchingStatus.textContent = '';
+      // Render matching mode (will use cache if available)
+    renderMatching(currentIndex);
+  }
 
   // Render progress as per-letter colored spans to match the multicolor logo
   const progressText = `Question ${currentIndex + 1} of ${questions.length}`;
@@ -240,8 +373,124 @@ function renderQuestion() {
     progressEl.appendChild(span);
   }
 
+  // Always update badges to show current state
+  updateBadges();
+
   prevBtn.disabled = currentIndex === 0;
   nextBtn.disabled = currentIndex === questions.length - 1;
+}
+
+async function fetchMatching(index){
+  const q = questions[index];
+  if (!q) return null;
+  // Instant local terms from choices to avoid network latency
+  const localTerms = (q.choices || [])
+    .map(c => String(c || '').replace(/^[A-H][).:\-\s]+/, '').trim())
+    .filter(Boolean)
+    .map(txt => {
+      const words = txt.split(/\s+/);
+      return words.slice(0, Math.min(4, Math.max(2, words.length))).join(' ');
+    });
+  if (localTerms.length) {
+    const terms = localTerms.slice(0, q.choices.length);
+    const order = shuffleArray(terms.map((_, i) => i));
+    matchingCache[index] = {
+      terms,
+      order,
+      matchedTerms: new Set(),
+      matchedDefs: new Set(),
+      selectedTerm: null,
+      selectedDef: null
+    };
+    if (matchingStatus) matchingStatus.textContent = '';
+    return matchingCache[index];
+  }
+
+  if (matchingStatus) matchingStatus.textContent = 'Generating matching terms…';
+  try {
+    const resp = await fetch(`${SERVER_URL}/api/matching-terms`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stem: q.stem, choices: q.choices })
+    });
+    if (!resp.ok) {
+      if (matchingStatus) matchingStatus.textContent = 'Could not generate terms (API error).';
+      return null;
+    }
+    const data = await resp.json();
+    if (!data || !Array.isArray(data.terms) || !data.terms.length) {
+      if (matchingStatus) matchingStatus.textContent = 'No terms returned.';
+      return null;
+    }
+    const terms = data.terms.slice(0, q.choices.length);
+    if (!terms.length) {
+      if (matchingStatus) matchingStatus.textContent = 'No terms generated.';
+      return null;
+    }
+    const order = shuffleArray(terms.map((_, i) => i));
+    matchingCache[index] = {
+      terms,
+      order,
+      matchedTerms: new Set(),
+      matchedDefs: new Set(),
+      selectedTerm: null,
+      selectedDef: null
+    };
+    return matchingCache[index];
+  } catch (err) {
+    if (matchingStatus) matchingStatus.textContent = 'Matching error — check console.';
+    console.error('matching fetch error', err);
+    return null;
+  }
+}
+
+function renderMatching(index){
+  if (!matchingContainer || !matchingTermsEl || !matchingDefsEl) return;
+  const existing = matchingCache[index];
+  if (!existing) {
+    // Fetch on demand if not cached
+    fetchMatching(index).then(() => {
+      // Re-render after fetch completes
+      if (matchingCache[index]) {
+        renderMatching(index);
+      }
+    });
+    return;
+  }
+
+  const q = questions[index];
+  const state = existing;
+  const { terms, order, matchedTerms, matchedDefs, selectedTerm, selectedDef } = state;
+
+  if (matchingStatus) matchingStatus.textContent = matchedTerms.size === terms.length ? 'All matched! 🎉' : '';
+
+  matchingTermsEl.innerHTML = '';
+  // Render terms in shuffled order so pairing is not forced by row alignment
+  order.forEach((termIdx) => {
+    const term = terms[termIdx];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'match-item match-term' + (matchedTerms.has(termIdx) ? ' matched' : selectedTerm === termIdx ? ' selected' : '');
+    btn.textContent = term;
+    btn.dataset.termIndex = termIdx; // keep original index for correctness check
+    btn.disabled = matchedTerms.has(termIdx);
+    matchingTermsEl.appendChild(btn);
+  });
+
+  matchingDefsEl.innerHTML = '';
+  q.choices.forEach((choice, choiceIdx) => {
+    const letter = choice.trim().slice(0, 1).toUpperCase();
+    const text = choice.trim().replace(/^[A-H][).:\-\s]+/, '').trim();
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const isMatched = matchedDefs.has(choiceIdx);
+    const isSelected = selectedDef === choiceIdx;
+    btn.className = 'match-item match-def' + (isMatched ? ' matched' : isSelected ? ' selected' : '');
+    btn.innerHTML = `<span class="match-letter">${letter}</span> ${text}`;
+    btn.dataset.defIndex = choiceIdx;
+    btn.disabled = isMatched;
+    matchingDefsEl.appendChild(btn);
+  });
 }
 
 // Initialize prev/next buttons with arrow SVGs (cute rounded arrows handled in CSS)
@@ -267,6 +516,9 @@ homeBtn.addEventListener('click', () => {
     try { video.load(); } catch(e){}
   }
 });
+
+if (modeMcqBtn) modeMcqBtn.addEventListener('click', () => setMode('mcq'));
+if (modeMatchBtn) modeMatchBtn.addEventListener('click', () => setMode('matching'));
 
 prevBtn.addEventListener("click", () => {
   if (currentIndex > 0) {
@@ -532,46 +784,6 @@ if (sendChatBtn && chatInput) {
       e.preventDefault();
       e.stopPropagation();
       triggerSend();
-    }
-  });
-}
-
-// AI grading: generate answer key via server for all questions
-if (aiKeyBtn) {
-  aiKeyBtn.addEventListener('click', async () => {
-    if (!questions || !questions.length) return;
-    aiKeyBtn.disabled = true;
-    const SERVER_URL = 'http://localhost:5174';
-    let done = 0;
-    statusEl.textContent = `Generating AI key… 0/${questions.length}`;
-    try {
-      for (let i = 0; i < questions.length; i++) {
-        const q = questions[i];
-        // Skip if already has an answer
-        // If you want to overwrite existing, remove this check
-        if (q.answer && /^[A-H]$/.test(q.answer)) { done++; statusEl.textContent = `Generating AI key… ${done}/${questions.length}`; continue; }
-        const body = { stem: q.stem, choices: q.choices };
-        const resp = await fetch(`${SERVER_URL}/api/grade`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-        });
-        if (!resp.ok) {
-          // non-fatal; move on
-          done++; statusEl.textContent = `Generating AI key… ${done}/${questions.length}`;
-          continue;
-        }
-        const data = await resp.json();
-        const letter = data && data.letter && String(data.letter).toUpperCase();
-        if (letter && /^[A-H]$/.test(letter)) questions[i].answer = letter;
-        done++;
-        statusEl.textContent = `Generating AI key… ${done}/${questions.length}`;
-      }
-      recomputeAllCounts();
-      renderQuestion();
-      statusEl.textContent = `AI key ready. Reviewed ${done} question(s).`;
-    } catch (e) {
-      statusEl.textContent = `AI key error: ${String(e)}`;
-    } finally {
-      aiKeyBtn.disabled = false;
     }
   });
 }

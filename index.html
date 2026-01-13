@@ -43,47 +43,66 @@
             hidden
           />
 
-          <!-- Large round upload button (clicking opens file picker) -->
-          <label for="fileInput" class="upload-button" aria-hidden="false">
-            <!-- Plus icon for upload -->
-            <svg class="upload-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M12 5v14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M5 12h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <div class="upload-label">Upload PDF / DOCX</div>
-          </label>
+          <div class="button-row">
+            <!-- Large round upload button (clicking opens file picker) -->
+            <label for="fileInput" class="upload-button" aria-hidden="false">
+              <!-- Plus icon for upload -->
+              <svg class="upload-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 5v14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 12h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div class="upload-label">Upload PDF / DOCX</div>
+            </label>
 
-          <button id="convertBtn" disabled class="convert-btn">
-            <span class="convert-label">Convert</span>
-            <svg class="convert-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M5 12h12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M13 8l4 4-4 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+            <button id="convertBtn" disabled class="convert-btn">
+              <span class="convert-label">Convert</span>
+              <svg class="convert-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M5 12h12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M13 8l4 4-4 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
 
           <div id="status"></div>
         </div>
       </section>
 
       <section id="quiz" hidden>
-        <div class="quiz-header">
-          <div id="progress"></div>
-          <div class="score-badges">
-            <span id="answeredBadge" class="badge">Answered: 0</span>
-            <span id="correctBadge" class="badge">Correct: 0</span>
-            <span id="wrongBadge" class="badge">Wrong: 0</span>
-            <button id="aiKeyBtn" class="badge" title="Generate AI answer key">Generate Key (AI)</button>
+        <div class="quiz-body">
+          <aside class="mode-panel">
+            <div class="mode-title">Structure</div>
+            <button id="modeMcq" class="mode-btn active">Multiple Choice</button>
+            <button id="modeMatch" class="mode-btn">Matching (AI)</button>
+            <div id="matchingStatus" class="mode-status"></div>
+          </aside>
+
+          <div class="quiz-main">
+            <div class="quiz-header">
+              <div id="progress"></div>
+              <div class="score-badges">
+                <span id="answeredBadge" class="badge">Answered: 0</span>
+                <span id="correctBadge" class="badge badge-correct">✓ 0</span>
+                <span id="wrongBadge" class="badge badge-wrong">✗ 0</span>
+              </div>
+            </div>
+
+            <pre id="question"></pre>
+
+            <div id="choices"></div>
+
+            <div id="matching" class="matching" hidden>
+              <div class="matching-columns">
+                <div id="matchingTerms" class="matching-col terms"></div>
+                <div id="matchingDefs" class="matching-col defs"></div>
+              </div>
+            </div>
+
+            <div class="quiz-controls">
+              <button id="prev" aria-label="Previous" title="Previous"></button>
+              <button id="explainBtn" aria-label="Explain" title="Explain">?</button>
+              <button id="next" aria-label="Next" title="Next"></button>
+            </div>
           </div>
-        </div>
-
-        <pre id="question"></pre>
-
-        <div id="choices"></div>
-
-        <div class="quiz-controls">
-          <button id="prev" aria-label="Previous" title="Previous"></button>
-          <button id="explainBtn" aria-label="Explain" title="Explain">?</button>
-          <button id="next" aria-label="Next" title="Next"></button>
         </div>
       </section>
     </main>
