@@ -18,6 +18,8 @@
 
 Convert PDF and DOCX files into interactive multiple-choice quizzes with AI-powered explanations and grading.
 
+
+
 ## Features
 
 - 📄 **PDF & DOCX Support** - Upload and parse quiz questions from documents
@@ -125,6 +127,57 @@ Answer: B
 - **Backend:** Node.js, Express
 - **AI:** Ollama (local LLM runtime)
 - **Model:** qwen2.5:3b (fast, lightweight)
+
+## ☁️ Deployment
+
+**⚠️ Important: This app is designed to run locally for FREE using Ollama.** 
+
+Deploying to the cloud requires significant modifications and will cost money because:
+- You'll need to replace Ollama with a paid AI API (OpenAI, Anthropic, etc.)
+- You'll need a VPS/cloud server to run Ollama ($12-24/month minimum)
+- Traditional hosting platforms (Vercel, GitHub Pages) cannot run Ollama
+
+### Option 1: Local Use Only (Recommended - FREE)
+Just use it on your computer. No deployment needed!
+
+### Option 2: Deploy Frontend + Use Paid AI API
+1. **Modify the backend** to use OpenAI/Anthropic instead of Ollama
+2. **Deploy frontend** to Vercel or GitHub Pages (free)
+3. **Deploy backend** to Vercel Serverless Functions (free tier)
+4. **Pay per AI request** (~$0.002-0.01 per question)
+
+**Steps:**
+- Update `server/index.js` to use OpenAI API instead of Ollama
+- Add API key to environment variables
+- Deploy frontend: `vercel --prod` or push to GitHub Pages
+- Deploy backend: `cd server && vercel --prod`
+- Update `SERVER_URL` in `src/main.js` to your backend URL
+
+### Option 3: Full Cloud Deployment with Ollama
+1. **Rent a VPS** (DigitalOcean, Linode, AWS EC2) - $12-24/month
+2. **Install Ollama** on the server
+3. **Install Node.js** and dependencies
+4. **Clone your repo** and run both servers
+5. **Configure firewall** to allow ports 5173 and 5174
+6. **Use PM2** or similar to keep servers running
+
+**Commands:**
+```bash
+# On your VPS:
+curl -fsSL https://ollama.ai/install.sh | sh
+ollama pull qwen2.5:3b
+git clone https://github.com/npmcry/sickafcode.git
+cd sickafcode
+npm install
+cd server && npm install
+npm install -g pm2
+pm2 start server/index.js --name backend
+pm2 start "npm run dev" --name frontend
+pm2 save
+pm2 startup
+```
+
+**Recommendation:** Keep it local unless you need to share it with others or want to pay for cloud hosting.
 
 ## Configuration
 
