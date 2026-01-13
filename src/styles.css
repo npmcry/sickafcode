@@ -573,7 +573,7 @@ body.quiz-mode .bg-video{ display: block; }
 .send-icon { font-size: 16px; transform: translateX(1px) rotate(20deg); display:block; }
 /* --- White Ollama-like modal overrides --- */
 .modal-inner.chat-white{ background: rgba(255,255,255,0.92); padding: 20px; border-radius: 24px; width: 100%; max-width: 860px; height: clamp(480px, 72vh, 640px); box-shadow: 0 30px 80px rgba(0,0,0,0.18); display:flex; flex-direction:column; gap: 16px; position:relative; color:#0b0f16; overflow:hidden; margin: 0 auto; }
-.modal-inner.chat-white .modal-close{ position:absolute; right:14px; top:12px; color:#8a8f98; background:transparent; border:none; width:32px; height:32px; border-radius:8px; }
+.modal-inner.chat-white .modal-close{ position:absolute; right:14px; top:12px; color:#8a8f98; background:transparent; border:none; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:24px; z-index:10; }
 .modal-inner.chat-white .modal-close:hover{ background:#f1f3f5; color:#111; }
 .chat-hero{ flex:1; min-height: 220px; display:flex; align-items:center; justify-content:center; position:relative; }
 .chat-hero-img{ width:72px; height:72px; object-fit:contain; filter: drop-shadow(0 2px 1px rgba(0,0,0,0.12)); }
