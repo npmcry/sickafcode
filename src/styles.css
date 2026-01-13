@@ -1,0 +1,593 @@
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 24px;
+  background: #fafafa;
+}
+
+/* Use border-box everywhere for consistent sizing across labels and buttons */
+* { box-sizing: border-box; }
+
+.topbar {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.hero {
+  margin-bottom: 24px;
+}
+
+button {
+  margin-top: 12px;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+pre {
+  background: #f0f0f0;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+
+:root{
+  /* Cinnamonroll theme palette */
+  --cinnamon: #c98a66; /* warm cinnamon */
+  --cream: #fff6ea; /* soft cream */
+  --icing-pink: #ffd6e0;
+  --pale-blue: #e8f6ff; /* gentle pastel blue backdrop */
+  --button-blue: #2b5c8a; /* darker aesthetic blue for upload button */
+  --convert-green: #2fa86b; /* green for convert button */
+  --button-blue-text: #ffffff;
+  --muted: #6b6b6b;
+  --card-bg: #ffffff;
+  --shadow: 0 8px 26px rgba(15,15,15,0.06);
+  /* darker pastel accents for choice badges */
+  --c1-dark: #66bfff;
+  --c2-dark: #ff9bb3;
+  --c3-dark: #f0e27a;
+  --c4-dark: #8fcfe6;
+}
+
+html,body{
+  height:100%;
+}
+
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 28px;
+  color: #222;
+  position: relative;
+  overflow-x: hidden;
+
+  /* Primary background: cinnamonroll image from `public/` with gentle overlay */
+  background-color: var(--pale-blue);
+  background-image: linear-gradient(rgba(255,246,234,0.28), rgba(232,246,255,0.18)), url('/cinnamarol.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* Subtle floating background layers to evoke swirls/icing only on main (non-quiz) page */
+body:not(.quiz-mode)::before{
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* remove the large filled circle; keep subtle swirls only */
+  background-image:
+    radial-gradient(circle at 80% 70%, rgba(201,138,102,0.06) 0 200px, transparent 201px),
+    radial-gradient(circle at 50% 50%, rgba(220,240,255,0.06) 0 320px, transparent 321px);
+  background-repeat: no-repeat;
+  transform: translateZ(0);
+  animation: floatBG 28s linear infinite;
+}
+
+@keyframes floatBG{
+  0%{ background-position: 0 0, 0 0, 0 0; }
+  50%{ background-position: 40px -30px, -60px 50px, 20px -40px; }
+  100%{ background-position: 0 0, 0 0, 0 0; }
+}
+
+/* Quiz mode: use the sky image as the background and animate the stars slightly
+   to create a gentle floating effect that matches the actual image. This
+   replaces the swirl layers used on the main screen. */
+body.quiz-mode{
+  background-image: linear-gradient(rgba(255,246,234,0.08), rgba(232,246,255,0.06)), url('/sky.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* Use the same sky image as an animated layer so the stars appear to drift
+   while keeping their exact appearance (we animate background-position). */
+body.quiz-mode::before{
+  content: "";
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image: url('/sky.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: 50% 50%;
+  opacity: 0.18; /* subtle layer so stars are visible but not overpowering */
+  transform: translateZ(0);
+  animation: floatStars 60s linear infinite;
+}
+
+@keyframes floatStars{
+  0%{ background-position: 50% 50%; }
+  50%{ background-position: 52% 48%; }
+  100%{ background-position: 50% 50%; }
+}
+
+.page{
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+/* Hide main hero/upload area when in quiz mode so only quiz UI remains */
+body.quiz-mode .hero{ display:none; }
+
+/* Keep header visible in quiz-mode; brand acts as Home button */
+.topbar{ display:flex; align-items:center; padding:8px 0; }
+.brand{ background: transparent; border: none; color: var(--button-blue); font-family: 'Fredoka One', 'Baloo 2'; font-size: 1.15rem; cursor: pointer; padding:0; }
+.brand-img{ display:block; height:56px; width:auto; }
+.brand{ padding:4px 6px; }
+
+/* Score badges in quiz header */
+.quiz-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.score-badges{ display:flex; gap:8px; align-items:center; }
+.badge{ background:#fff; border:1px solid rgba(16,16,16,0.06); padding:6px 10px; border-radius:999px; font-weight:600; color:var(--muted); }
+
+/* Explain button style (small circular) */
+#explainBtn{ width:44px; height:44px; border-radius:50%; font-weight:700; background:#fff; }
+
+/* Style the progress (Question X of Y) to match h1 look */
+#progress{
+  font-family: 'Fredoka One', 'Baloo 2', 'Inter', system-ui, sans-serif;
+  font-size: 2.2rem;
+  color: var(--button-blue);
+  margin-bottom: 12px;
+  -webkit-text-stroke: 2px #3b271b; /* match logo outline */
+  text-shadow:
+    0 1px 0 #3b271b,
+    1px 0 0 #3b271b,
+    -1px 0 0 #3b271b,
+    0 -1px 0 #3b271b,
+    1px 1px 0 #3b271b,
+    -1px -1px 0 #3b271b,
+    2px 0 0 #3b271b,
+    -2px 0 0 #3b271b,
+    0 2px 0 #3b271b,
+    0 -2px 0 #3b271b,
+    0 6px 12px rgba(59,42,29,0.08);
+}
+
+/* Progress uses per-letter spans that match the logo look but inherit the progress font-size */
+.progress-letter{
+  display:inline-block;
+  font-family: 'Fredoka One', 'Baloo 2', 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: inherit;
+  line-height: 1;
+  padding: 0 2px;
+  -webkit-text-stroke: 1px #3b271b;
+  text-shadow:
+    0 1px 0 #3b271b,
+    1px 0 0 #3b271b,
+    0 6px 10px rgba(59,42,29,0.06);
+}
+
+  /* Per-letter color mapping to match `.logo-letter` palette */
+  .progress-letter.c1{ color: #a7e0ff; } /* pale blue */
+  .progress-letter.c2{ color: #ffd0df; } /* pink */
+  .progress-letter.c3{ color: #fff3b0; } /* pale yellow */
+  .progress-letter.c4{ color: #cfefff; } /* pale blue variant */
+
+/* Quiz nav: circular arrow-only buttons */
+.quiz-controls{ display:flex; gap:12px; justify-content:center; align-items:center; margin-top:16px; }
+.quiz-controls button{ width:56px; height:56px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; border:2px solid transparent; background: #fff; box-shadow: none; cursor:pointer; }
+.quiz-controls button svg{ width:20px; height:20px; }
+.quiz-controls #next{ border-color: rgba(47,168,107,0.28); color: var(--convert-green); }
+.quiz-controls #next:hover{ background: var(--convert-green); color: #fff; }
+.quiz-controls #prev{ border-color: rgba(255,80,80,0.22); color: #ff5a5a; }
+.quiz-controls #prev:hover{ background: #ff5a5a; color: #fff; }
+
+/* remove label text fallback for small screens */
+@media (max-width:520px){
+  #progress{ font-size:1.5rem; }
+  .quiz-controls button{ width:48px; height:48px; }
+}
+
+.hero h1{
+  font-family: 'Fredoka One', 'Baloo 2', 'Inter', system-ui, sans-serif;
+  font-size: 2.6rem;
+  margin: 6px 0 4px;
+  /* match UI blue and subtle outline like the buttons */
+  color: var(--button-blue);
+  letter-spacing: 0.6px;
+  line-height: 1.05;
+  -webkit-text-stroke: 1px rgba(43,92,138,0.08);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.6), 0 2px 6px rgba(15,15,15,0.04);
+}
+
+/* Hero description text (under the title) — larger for readability */
+.hero p{
+  font-size: 1.5rem; /* ~24px — increased per request */
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 8px 0 16px;
+}
+
+/* Logo-style multicolor letters with dark outline to mimic the cinnamonroll logo */
+.logo-text{ display:inline-block; transform: translateZ(0); }
+.logo-letter{
+    display:inline-block;
+    font-family: 'Fredoka One', 'Baloo 2', 'Inter', system-ui, sans-serif;
+    font-size: 3.0rem;
+    line-height: 1;
+    padding: 0 2px;
+  font-weight: 700;
+  -webkit-text-stroke: 1px #3b271b; /* thinner outline */
+  /* simplified shadow for less thickness while keeping depth */
+  text-shadow:
+    0 1px 0 #3b271b,
+    1px 0 0 #3b271b,
+    0 6px 10px rgba(59,42,29,0.06);
+    transform-origin: center;
+}
+
+/* Pastel fill colors matching the logo */
+.logo-letter.c1{ color: #a7e0ff; } /* pale blue */
+.logo-letter.c2{ color: #ffd0df; } /* pink */
+.logo-letter.c3{ color: #fff3b0; } /* pale yellow */
+.logo-letter.c4{ color: #cfefff; } /* another pale blue */
+
+/* Slightly tighten spacing on small screens */
+@media (max-width:520px){
+    .logo-letter{ font-size: 1.9rem; padding:0 1px; -webkit-text-stroke:2px #3b271b; text-shadow: 0 1px 0 #3b271b, 1px 0 0 #3b271b, -1px 0 0 #3b271b, 0 -1px 0 #3b271b, 0 4px 8px rgba(59,42,29,0.08); }
+}
+
+.brand{
+  font-family: 'Baloo 2', 'Inter';
+  font-size: 20px;
+}
+
+section.hero{
+  margin-bottom: 20px;
+}
+
+/* Center the hero content and make the upload area prominent */
+.hero{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 12px;
+}
+
+/* center hero vertically in the viewport so buttons sit mid-screen */
+.hero{
+  min-height: calc(100vh - 160px);
+  justify-content: center;
+}
+
+.upload-area{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+.upload-button{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 24px;
+  height:44px;
+  border-radius:999px;
+  background: #ffffff; /* white interior like your example */
+  color: var(--button-blue);
+  border: 2px solid var(--button-blue);
+  box-shadow: none;
+  font-weight:600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease;
+}
+
+/* Ensure label and button sizing/vertical alignment match exactly */
+.upload-button, .convert-btn{ line-height:1; vertical-align: middle; }
+
+.convert-btn{ margin-top: 0; }
+
+.upload-button:hover{ transform: translateY(-3px); box-shadow: 0 10px 30px rgba(43,92,138,0.12); background: var(--button-blue); color: var(--button-blue-text); }
+.upload-button:hover .upload-svg path{ stroke: currentColor; }
+
+.upload-svg{ display:block; margin:0; width:20px; height:20px; }
+.upload-svg path{ stroke: currentColor; stroke-width:1.6; }
+.upload-label{ font-size:0.95rem; color:var(--button-blue); font-weight:600; }
+
+/* When hovered/active we invert the label color to keep contrast */
+.upload-button:hover .upload-label{ color: var(--button-blue-text); }
+
+/* Convert button styled to match wallpaper (cinnamon) */
+.convert-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 24px;
+  height:44px;
+  border-radius:999px;
+  background: #ffffff; /* white interior like upload */
+  color: var(--convert-green);
+  border: 2px solid var(--convert-green);
+  font-weight:600;
+  font-size: 1rem; /* match upload-button text sizing */
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease;
+}
+
+.convert-btn:disabled{ opacity: .6; cursor: not-allowed; }
+.convert-svg{ width:20px; height:20px; display:block; }
+.convert-svg path{ stroke: currentColor; stroke-width:1.6; }
+
+.convert-label{ font-size:0.95rem; color:var(--convert-green); font-weight:600; }
+
+.convert-btn:hover{ transform: translateY(-3px); box-shadow: 0 10px 30px rgba(47,168,107,0.12); background: var(--convert-green); color: #fff; }
+.convert-btn:hover .convert-svg path{ stroke: currentColor; }
+
+/* Make sure the hero controls remain centered on small screens */
+@media (max-width:520px){
+  .upload-area{ gap:8px; }
+  .upload-button{ width:92px; height:92px; }
+  #question{ font-size:1.25rem; }
+}
+
+/* Quiz area styling tuned for memory and mastery: simple, low-clutter, large readable text */
+#quiz{
+  margin-top: 18px;
+}
+
+#question{
+  font-family: 'Fredoka One', 'Baloo 2', 'Inter', system-ui, sans-serif; /* match h1 */
+  font-size: 2rem; /* larger to match title weight */
+  font-weight: 500; /* thinner for readability */
+  color: #3b271b; /* solid brown matching h1 outline */
+  line-height: 1.45;
+  letter-spacing: 0.25px;
+  padding: 18px 20px;
+  background: var(--card-bg);
+  border-radius: 14px;
+  box-shadow: none; /* removed per request */
+  margin-bottom: 14px;
+  white-space: pre-wrap; /* preserve line breaks but wrap long lines */
+  -webkit-text-stroke: 0; /* remove stroke to make text thinner */
+  text-shadow: none;
+}
+
+#progress{ color: var(--muted); margin-bottom: 8px; }
+
+/* Choice buttons as rounded pastel cards (Sanrio-like palette) */
+#choices button, #choices .choice{
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  gap: 14px;
+  margin: 12px 0;
+  padding: 20px 20px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: 1px solid rgba(16,16,16,0.06);
+  background: #ffffff; /* solid white box for focus */
+  font-family: 'Inter', 'Baloo 2', system-ui, sans-serif; /* clearer, easier-to-read */
+  font-size: 1.28rem; /* bigger, clearer text */
+  font-weight: 500; /* less bold for clarity */
+  letter-spacing: 0.25px;
+  line-height: 1.5;
+  color: #111; /* slightly darker for maximum clarity */
+  box-shadow: none;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  cursor: pointer;
+}
+
+#choices button:hover, #choices .choice:hover{
+  transform: translateY(-2px);
+  box-shadow: none;
+}
+
+/* Remove soft background variants — choices use white boxes and a colored badge for emphasis */
+
+/* Add a round badge showing the letter (A/B/C/D) using the data-letter attribute */
+#choices .choice::before{
+  content: attr(data-letter);
+  flex: 0 0 54px;
+  width:54px; height:54px;
+  display:inline-flex;
+  align-items:center; justify-content:center;
+  border-radius:999px;
+  color: #fff;
+  font-weight:900;
+  font-size:1.05rem;
+}
+
+/* Map letter badges to darker pastels for strong, solid focus */
+#choices .choice[data-letter="A"]::before{ background: var(--c1-dark); }
+#choices .choice[data-letter="B"]::before{ background: var(--c2-dark); }
+#choices .choice[data-letter="C"]::before{ background: var(--c3-dark); color:#3b271b; }
+#choices .choice[data-letter="D"]::before{ background: var(--c4-dark); }
+
+/* Selected state: stronger accent ring and subtle highlight */
+.choice.selected{
+  outline: 4px solid rgba(255,119,169,0.12);
+  box-shadow: none;
+  transform: translateY(-2px) scale(1.0);
+}
+
+.quiz-controls{ margin: 14px 0; }
+
+button[disabled]{ opacity: .55; cursor: not-allowed; }
+
+details summary{ cursor: pointer; padding: 8px 0; }
+
+pre#source{ border-radius: 10px; padding: 12px; background: #fbfbfb; }
+
+.quiz-controls {
+  margin: 12px 0;
+}
+
+.choice { cursor: pointer; }
+.choice.selected { outline: 3px solid rgba(255,77,141,.35); }
+
+/* Background video used for quiz-mode: sits behind content and covers viewport */
+.bg-video{
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+  display: none; /* shown only in quiz-mode */
+  pointer-events: none;
+}
+
+/* Show the video when quiz-mode is active; keep the existing sky image as fallback */
+body.quiz-mode .bg-video{ display: block; }
+
+/* Modal for explanations (Ollama-like dark chat) */
+.modal{ position: fixed; inset: 0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.06); z-index: 1000; padding: clamp(16px, 3vw, 32px); box-sizing: border-box; pointer-events: auto; }
+.modal[hidden]{ display:none; }
+.modal-inner.chat-dark{ 
+  background: #0b0f16; 
+  padding: 12px; 
+  border-radius: 16px; 
+  width: min(760px, 94%); 
+  max-height: 82vh; 
+  overflow:hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  color: #e6e9ef;
+}
+
+.chat-header{
+  display:grid; grid-template-columns: 1fr auto auto; align-items:center; gap: 8px;
+  padding: 6px 8px 0 8px;
+}
+.chat-brand{ display:flex; align-items:center; gap:8px; min-width:0; }
+.chat-brand-img{ width:22px; height:22px; border-radius:6px; object-fit:cover; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25)); }
+.chat-brand-name{ color:#cfd7e9; font-weight:600; letter-spacing:.2px; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.model-chip{
+  background: #0f1723;
+  border: 1px solid #1f2a3a;
+  color: #b8c2d6;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  text-transform: lowercase;
+}
+.modal-close{ 
+  border:none; 
+  background:transparent; 
+  font-size:22px; 
+  cursor:pointer;
+  color: #8b94a7;
+  line-height: 1;
+  padding: 0 6px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+.modal-close:hover { color: #d0d7e6; background: #121826; }
+
+#explainContent{ margin: 0; color:#0b0f16; line-height:1.6; }
+
+.chat-history { flex: 1 1 auto; overflow-y: auto; min-height: 160px; max-height: none; padding: 10px 12px; background: transparent; border: none; border-radius: 12px; }
+.msg-row{ display:flex; align-items:flex-start; gap:10px; margin: 10px 4px; }
+.msg-row.user{ flex-direction: row-reverse; }
+.avatar{ width:28px; height:28px; border-radius: 8px; background:#f4f6f8; border:1px solid #e5e7eb; display:flex; align-items:center; justify-content:center; color:#444; font-size:12px; flex:0 0 28px; }
+.bubble{ padding: 10px 12px; border-radius: 12px; max-width: 85%; white-space: pre-wrap; word-wrap: break-word; contain: content; }
+.msg-row.user .bubble{ background:#f3f4f6; border:1px solid #e5e7eb; color:#111827; }
+.msg-row.assistant .bubble{ background:#ffffff; border:1px solid #e5e7eb; color:#111827; }
+
+.chat-message {
+  margin-bottom: 10px; padding: 10px 12px; border-radius: 10px; animation: fadeIn 0.2s ease; max-width: 90%; white-space: pre-wrap; 
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-message.user {
+  background: linear-gradient(180deg, #153353, #0e263f); border: 1px solid #1b3a5c; color: #d7e7ff; margin-left: auto; text-align: left; 
+}
+
+.chat-message.assistant {
+  background: #0e1320; border: 1px solid #171f2d; color:#dee6f5; margin-right: auto; 
+}
+
+.chat-message.loading {
+  background: #0e1320; border: 1px solid #171f2d; color: #8b94a7; font-style: italic; margin-right: auto; 
+}
+
+.chat-input-area {
+  display: flex; gap: 8px; align-items: flex-end; padding-top: 4px; 
+}
+
+#chatInput {
+  flex:1; padding: 12px 12px; background:#0b101a; color:#e6e9ef; border:1px solid #1a2332; border-radius: 10px; font-family:'Inter',sans-serif; font-size: 0.98rem; resize: vertical; min-height: 56px; 
+}
+
+#chatInput:focus {
+  outline: none; border-color:#264164; box-shadow: 0 0 0 2px rgba(38,65,100,0.25); 
+}
+
+.send-btn {
+  width:46px; height:46px; min-width:46px; min-height:46px; display:inline-flex; align-items:center; justify-content:center; border-radius: 12px; border:1px solid #1a2332; background: #101725; color:#ccd6ea; cursor:pointer; transition: background .18s ease, border-color .18s ease, transform .12s ease; 
+}
+
+.send-btn:hover {
+  background:#0f1726; border-color:#223049; 
+}
+
+.send-btn:active {
+  transform: translateY(1px); 
+}
+
+.send-btn:disabled {
+  opacity:.5; cursor: not-allowed; 
+}
+
+.send-icon { font-size: 16px; transform: translateX(1px) rotate(20deg); display:block; }
+/* --- White Ollama-like modal overrides --- */
+.modal-inner.chat-white{ background: rgba(255,255,255,0.92); padding: 20px; border-radius: 24px; width: 100%; max-width: 860px; height: clamp(480px, 72vh, 640px); box-shadow: 0 30px 80px rgba(0,0,0,0.18); display:flex; flex-direction:column; gap: 16px; position:relative; color:#0b0f16; overflow:hidden; margin: 0 auto; }
+.modal-inner.chat-white .modal-close{ position:absolute; right:14px; top:12px; color:#8a8f98; background:transparent; border:none; width:32px; height:32px; border-radius:8px; }
+.modal-inner.chat-white .modal-close:hover{ background:#f1f3f5; color:#111; }
+.chat-hero{ flex:1; min-height: 220px; display:flex; align-items:center; justify-content:center; position:relative; }
+.chat-hero-img{ width:72px; height:72px; object-fit:contain; filter: drop-shadow(0 2px 1px rgba(0,0,0,0.12)); }
+.chat-hero-dot{ position:absolute; width:6px; height:6px; background:#e74c3c; border-radius:50%; right: calc(50% - 18px); top: calc(50% - 8px); box-shadow: 0 0 0 2px rgba(231,76,60,0.25); }
+.chat-history-white{ background: transparent; border:none; padding: 0; }
+.composer{ display:flex; align-items:center; gap:8px; background:#f4f4f5; border-radius: 28px; padding: 10px 12px; border:1px solid #ececec; width:100%; box-sizing:border-box; }
+.send-circle, .icon-btn{ flex:0 0 auto; }
+.composer-input{ flex:1 1 auto; min-width:0; }
+.composer-input{ flex:1; background:transparent; border:none; outline:none; font-family:'Inter',sans-serif; font-size: 1rem; color:#1b1f27; min-height:24px; max-height:120px; resize: vertical; padding: 6px 4px; }
+.composer-input::placeholder{ color:#99a1af; }
+.icon-btn{ width:36px; height:36px; border-radius: 18px; border:none; background:#e9e9e9; color:#444; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+.pill{ display:inline-flex; align-items:center; gap:6px; padding: 6px 10px; background:#ececec; border-radius: 20px; color:#444; font-size: 0.9rem; border:1px solid #e1e1e1; }
+.pill .caret{ margin-left: 2px; opacity:.7; }
+.send-circle{ width:36px; height:36px; border-radius:18px; border:none; background:#e9e9e9; color:#222; display:inline-flex; align-items:center; justify-content:center; font-weight:700; cursor:pointer; }
+
+/* Ensure no dark input overrides; keep single light composer */
+.modal-inner.chat-white #chatInput{ background:transparent !important; border:none !important; color:#1b1f27 !important; box-shadow:none !important; }

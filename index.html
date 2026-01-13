@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF to QUIZ</title>
+
+    <!-- Playful fonts for a cute, modern UI -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Rounded display font similar to Cooper Black -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+
+    <!-- Main styles -->
+    <link rel="stylesheet" href="src/styles.css" />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <button id="homeBtn" class="brand" aria-label="Home">
+        <img src="/home.png" alt="PDFQuiz home" class="brand-img" />
+      </button>
+    </header>
+
+    <main class="page">
+      <section class="hero">
+        <h1 class="logo-text">
+          <span class="logo-letter c1">Q</span><span class="logo-letter c2">u</span><span class="logo-letter c3">i</span><span class="logo-letter c4">z</span>
+          <span> </span>
+          <span class="logo-letter c2">M</span><span class="logo-letter c3">a</span><span class="logo-letter c4">k</span><span class="logo-letter c1">e</span><span class="logo-letter c2">r</span>
+          <span> </span>
+          <span class="logo-letter c3">f</span><span class="logo-letter c4">r</span><span class="logo-letter c1">o</span><span class="logo-letter c2">m</span>
+          <span> </span>
+          <span class="logo-letter c4">P</span><span class="logo-letter c1">D</span><span class="logo-letter c2">F</span>
+        </h1>
+        <p>Upload a PDF or DOCX and quiz yourself!</p>
+
+        <div class="upload-area">
+          <input
+            id="fileInput"
+            type="file"
+            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            hidden
+          />
+
+          <!-- Large round upload button (clicking opens file picker) -->
+          <label for="fileInput" class="upload-button" aria-hidden="false">
+            <!-- Plus icon for upload -->
+            <svg class="upload-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 5v14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 12h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="upload-label">Upload PDF / DOCX</div>
+          </label>
+
+          <button id="convertBtn" disabled class="convert-btn">
+            <span class="convert-label">Convert</span>
+            <svg class="convert-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M5 12h12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M13 8l4 4-4 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <div id="status"></div>
+        </div>
+      </section>
+
+      <section id="quiz" hidden>
+        <div class="quiz-header">
+          <div id="progress"></div>
+          <div class="score-badges">
+            <span id="answeredBadge" class="badge">Answered: 0</span>
+            <span id="correctBadge" class="badge">Correct: 0</span>
+            <span id="wrongBadge" class="badge">Wrong: 0</span>
+            <button id="aiKeyBtn" class="badge" title="Generate AI answer key">Generate Key (AI)</button>
+          </div>
+        </div>
+
+        <pre id="question"></pre>
+
+        <div id="choices"></div>
+
+        <div class="quiz-controls">
+          <button id="prev" aria-label="Previous" title="Previous"></button>
+          <button id="explainBtn" aria-label="Explain" title="Explain">?</button>
+          <button id="next" aria-label="Next" title="Next"></button>
+        </div>
+      </section>
+    </main>
+
+    <!-- App entry -->
+    <!-- Video background for quiz mode (place quiz-bg.mp4 at project root or set data-quiz-video on <body>) -->
+    <video id="bgVideo" class="bg-video" loop muted playsinline aria-hidden="true"></video>
+
+    <!-- Explain modal -->
+    <div id="explainModal" class="modal" hidden>
+      <div class="modal-inner chat-white">
+        <button id="closeExplain" class="modal-close" aria-label="Close">×</button>
+
+        <div class="chat-hero">
+          <img src="/home.png" alt="Mascot" class="chat-hero-img" />
+          <span class="chat-hero-dot"></span>
+        </div>
+
+        <div id="explainContent" class="chat-history chat-history-white" aria-live="polite"></div>
+
+        <div class="composer" role="group" aria-label="Message composer">
+          <button class="icon-btn" title="Add" aria-label="Add">+</button>
+          <textarea id="chatInput" class="composer-input" placeholder="Send a message" rows="1"></textarea>
+          <button id="streamMode" class="pill" title="Toggle response mode" aria-label="Toggle response mode">Stream</button>
+          <button id="sendChat" class="send-circle" title="Send" aria-label="Send">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
